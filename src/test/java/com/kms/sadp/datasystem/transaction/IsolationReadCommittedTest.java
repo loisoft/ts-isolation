@@ -1,25 +1,32 @@
 package com.kms.sadp.datasystem.transaction;
 
 import com.kms.sadp.datasystem.transaction.domain.service.EmailService;
-import org.junit.Before;
+import com.kms.sadp.datasystem.transaction.domain.service.MailboxService;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @RunWith(SpringRunner.class)
 @Sql(executionPhase=Sql.ExecutionPhase.BEFORE_TEST_METHOD,scripts="classpath:/data-mysql.sql")
-public class IsolationTest {
+public class IsolationReadCommittedTest {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private MailboxService mailboxService;
+
     @Test
-    public void shouldReadUncommitted() throws InterruptedException {
+    public void shouldReadCommittedOk() throws InterruptedException {
         Runnable runnable1 = () -> {
             try {
+                //create new email and increase unread number to 11
                 emailService.addEmail();
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -28,7 +35,11 @@ public class IsolationTest {
 
         Runnable runnable2 = () -> {
             try {
-                emailService.getEmail();
+                Thread.sleep(2000L);
+                int count = emailService.countEmailsReadCommitted(2L);
+                Assert.assertEquals(0, count);
+                int countUnread = mailboxService.getUnread(2L);
+                Assert.assertEquals(10, countUnread);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -37,10 +48,6 @@ public class IsolationTest {
         new Thread(runnable1).start();
         new Thread(runnable2).start();
 
-        Thread.sleep(10000L);
-
-        new Thread(runnable2).start();
-
-        Thread.sleep(7000L);
+        Thread.sleep(5000L);
     }
 }

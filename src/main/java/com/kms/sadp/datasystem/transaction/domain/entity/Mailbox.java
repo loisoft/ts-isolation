@@ -9,7 +9,7 @@ public class Mailbox {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "unread")
-    private Long unread;
+    private Integer unread;
     @Column(name = "recipient_id")
     private Long recipientId;
 
@@ -21,11 +21,11 @@ public class Mailbox {
         this.id = id;
     }
 
-    public Long getUnread() {
+    public Integer getUnread() {
         return unread;
     }
 
-    public void setUnread(Long unread) {
+    public void setUnread(Integer unread) {
         this.unread = unread;
     }
 

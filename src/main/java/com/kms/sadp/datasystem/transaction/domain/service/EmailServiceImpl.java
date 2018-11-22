@@ -10,9 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
-
-import java.util.List;
 
 @Service
 public class EmailServiceImpl implements EmailService {
@@ -24,7 +21,7 @@ public class EmailServiceImpl implements EmailService {
     private MailboxRepository mailboxRepository;
 
     @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Transactional
     public void addEmail() throws InterruptedException {
         LOGGER.info("Start addEmail");
         Email email = new Email();
@@ -43,14 +40,13 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Transactional(isolation = Isolation.READ_UNCOMMITTED)
-    public void getEmail() throws InterruptedException {
-        Thread.sleep(3000L);
-        List<Email> emails = emailRepository.findByRecipientId(2L);
-        List<Mailbox> mailboxes = mailboxRepository.findByRecipientId(2L);
+    public int countEmailsReadUncommitted(long recipientId) {
+        return emailRepository.findByRecipientId(recipientId).size();
+    }
 
-        Assert.isTrue(emails.size() == 1, "Inconsistent data");
-        LOGGER.info("Number of emails = " + emails.size());
-        Assert.isTrue(mailboxes.get(0).getUnread() == 10, "Inconsistent data");
-        LOGGER.info("Number of unread = " + mailboxes.get(0).getUnread());
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public int countEmailsReadCommitted(long recipientId) {
+        return emailRepository.findByRecipientId(recipientId).size();
     }
 }
